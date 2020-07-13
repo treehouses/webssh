@@ -11,5 +11,5 @@ docker build -t webssh .
 ## Usage:
 - After build the docker image can run as a daemon service with default port 8888
 
-``docker run -p 8888:8888 -d webssh``
+   ``docker run -p 8888:8888 -d webssh``
 - Open a browser and navigate to the ``serverip:8888``
