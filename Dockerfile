@@ -1,6 +1,6 @@
 FROM treehouses/alpine:latest
 
-RUN apk update && apk add --no-cache libressl-dev musl-dev libffi-dev gcc libc-dev make openssl-dev python3-dev py-pip && \
+RUN apk update && apk add --no-cache libressl-dev musl-dev libffi-dev gcc libc-dev make openssl-dev python3-dev py3-bcrypt py3-pynacl py3-cryptography py-pip && \
     pip install webssh && \
     rm -rf /tmp/* /var/tmp/* /var/cache/apk/*
 
