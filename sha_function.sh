@@ -32,11 +32,11 @@ is_base (){
 get_service_version(){
     local version
     repo=$1
-    docker run -d $repo
-    container_id=$(docker ps | grep "webssh" | awk '{print$1;}')
-    echo $container_id
+    docker run -d $repo &>/dev/null
+    container_id=$(docker ps | grep "$repo" | awk '{print$1;}')
     version=$(docker exec -it $container_id wssh --version)
     echo $version
+    docker rm -f $container_id &>/dev/null
 }
 
 compare (){
