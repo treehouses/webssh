@@ -1,5 +1,6 @@
 # webssh
 ![GitHub](https://img.shields.io/github/license/ole-vi/webssh)
+![GitHub](https://img.shields.io/docker/image-size/treehouses/webssh)
 ## Introduction
 Web based ssh container based from treehouses alpine image. About webssh more can be view [here](https://pypi.org/project/webssh/).
 ## Installations:
