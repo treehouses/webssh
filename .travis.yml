@@ -1,0 +1,38 @@
+sudo: required
+dist: bionic
+addons:
+  apt:
+    update: true
+    packages:
+      - docker-ce
+services:
+  - docker
+script:
+  - export DOCKER_CLI_EXPERIMENTAL=enabled
+  - source sha_function.sh
+  - flag_alpine=$(is_base "treehouses/alpine:latest" "treehouses/webssh:latest")
+  - echo $flag_alpine
+  - echo $DOCKERAPIKEY | docker login -u "sevenseas" --password-stdin
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  - "./docker-build.sh treehouses/alpine:latest arm"
+  - "./docker-build.sh treehouses/alpine:latest amd64"
+  - "./docker-build.sh treehouses/alpine:latest arm64"
+  - flag=$(compare "treehouses/alpine:latest" "treehouses/webssh:latest" "treehouses/webssh:latest" "treehouses/webssh-tags:amd64")
+  - echo $flag
+before_deploy:
+  - tag_time=$(date +%Y%m%d%H%M)
+  - echo $tag_time
+  - tag_latest="latest"
+  - create_manifest treehouses/webssh $tag_latest $tag_time treehouses/webssh-tags:arm treehouses/webssh-tags:amd64 treehouses/webssh-tags:arm64
+  - docker manifest inspect treehouses/webssh:$tag_latest
+  - docker manifest inspect treehouses/webssh:$tag_time
+deploy:
+  - provider: script
+    script: docker manifest push treehouses/webssh:$tag_latest; docker manifest push treehouses/webssh:$tag_time
+    skip_cleanup: true
+    on:
+      all_branches: true
+      condition: "$flag = true"
+env:
+  global:
+    secure: "BmYuUvrKczoqtSiaxI7ps4LLdzpLNGnPTR9gFM7A6+mcYU9FOIAgzuhDC00tq2NeafpXpebmA+e/i1f+QPHg/z6pIVnYq0UM7IfzHBrP2KBu9QIoOn62KcAwVgMAbvIVpASN1zsykYba8NHuiloQ7ol2CxnqJupdhxUr4+d0nthYCM90at/qLHQRrvplIdBfLY6ilGGEOad9zq1HLZDkmsJPHkhVEm8QVeiEQg2JxBmhZLGD1dT5HATJIhsnwBuzq1GBBzFQ0ELeH0svRnXpUsBLa8MK94+mxVCG+mARbka2Cqp8TfhZv5+Sa+7Bdxwvq9HOtdg/2KF+sxz+lKPQ/agmAvt+UR0VtOEND2hWhQrvUXZpOJY5zq2B+2XnLJHc/pzAlHYLnRVXwszW6fR8ILw27m+0OL5GnRY/s8gBT0BnTH4NAAobc+Jz4RPFfAJT1EWoiBDn3odPcE2U+D7uEnadrZD7Kz+TBMKC0xQ6ba2KPxbt1JWIGKSynedzW40BPXw1mZfZGgw793H1pIzehVrrf83nU1/26h80ujT2gljbP4kwN0kwM8LQtjI/1665spqNhXc/UIzT5RJT74OU5GHKAJrF5nIT/feNncudOk05Qg/riO3T4Ks66BhfAF4LN0V6/7A/k44iROM8fxaZ+j7Amu5uhJPJnDBo3mWIkqI="
