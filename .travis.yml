@@ -31,7 +31,7 @@ script:
   - echo $DOCKERAPIKEY | docker login -u "sevenseas" --password-stdin
   - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   - "./docker-build.sh treehouses/alpine:latest arm arm64 amd64"
-  - flag=$(compare "treehouses/alpine@"$alpine_arm_sha "treehouses/webssh@"$webssh_arm_sha "treehouses/alpine@"$alpine_amd64_sha "treehouses/webssh@"$webssh_amd64_sha  "treehouses/alpine@"$alpine_arm64_sha "treehouses/webssh@"$webssh_arm64_sha "treehouses/webssh:latest")
+  - flag=$(compare "treehouses/alpine@"$alpine_arm_sha "treehouses/webssh@"$webssh_arm_sha "treehouses/alpine@"$alpine_amd64_sha "treehouses/webssh@"$webssh_amd64_sha  "treehouses/alpine@"$alpine_arm64_sha "treehouses/webssh@"$webssh_arm64_sha "treehouses/webssh:latest" "treehouses/webssh-tags:amd64")
   - echo $flag
 before_deploy:
   - "./deploy.sh arm arm64 amd64"
