@@ -60,7 +60,7 @@ compare (){
     result_amd64=$(is_base $5 $6)
     version1=$(get_service_version $5)
     version2=$(get_service_version $6)
-    [ $result_arm == "true" ] || [ $result_amd64 == "true" ] || [ $result_arm64 == "true" ]|| [ "$version1" != "$version2" ];     #compare alpine and service versions
+    if [ $result_arm == "true" ] || [ $result_amd64 == "true" ] || [ $result_arm64 == "true" ]|| [ "$version1" != "$version2" ];     #compare alpine and service versions
     then
         echo "true"
     else
@@ -73,16 +73,15 @@ create_manifest (){
     local tag_latest=$2     #latest
     local tag_time=$3       #timetag
     local tag_arm=$4        #treehouses/webssh-tags:arm
-    local tag_arm64=$5
-    local tag_x86=$6
-
-    docker manifest create   $repo:$tag_latest      $tag_arm $tag_arm64 $tag_x86
-    docker manifest create   $repo:$tag_time        $tag_arm $tag_arm64 $tag_x86
+    local tag_x86=$5
+    local tag_arm64=$6
+    docker manifest create   $repo:$tag_latest $tag_arm $tag_x86 $tag_arm64
+    docker manifest create   $repo:$tag_time   $tag_arm $tag_x86 $tag_arm64
 
     docker manifest annotate $repo:$tag_latest $tag_arm   --arch arm
     docker manifest annotate $repo:$tag_time   $tag_arm   --arch arm
-    docker manifest annotate $repo:$tag_latest $tag_arm64 --arch arm64
-    docker manifest annotate $repo:$tag_time   $tag_arm64 --arch arm64
     docker manifest annotate $repo:$tag_latest $tag_x86   --arch amd64
     docker manifest annotate $repo:$tag_time   $tag_x86   --arch amd64
+    docker manifest annotate $repo:$tag_latest $tag_arm64 --arch arm64
+    docker manifest annotate $repo:$tag_time   $tag_arm64 --arch arm64
 }
