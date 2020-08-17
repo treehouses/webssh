@@ -1,5 +1,23 @@
 #!/bin/bash
 
+get_manifest_sha (){
+    local repo=$1     # <source>/alpine:latest
+    local arch=$2     # arm
+    docker pull -q $repo &>/dev/null
+    docker manifest inspect $repo > "$arch".txt
+    sha=""
+    local i=0
+    while [ "$sha" == "" ] && read -r line
+    do
+        archecture=$(jq .manifests[$i].platform.architecture "$arch".txt |sed -e 's/^"//' -e 's/"$//')
+        if [ "$archecture" = "$arch" ];then
+            sha=$(jq .manifests[$i].digest "$arch".txt  |sed -e 's/^"//' -e 's/"$//')
+            echo ${sha}
+        fi
+        i=$i+1
+    done < "$arch".txt
+}
+
 get_sha(){
     docker pull $1 &>/dev/null
     sha=$(docker image inspect $1 | jq --raw-output '.[0].RootFS.Layers|.[]')   # [0] means first element of list,[]means all the elments of lists
@@ -37,10 +55,12 @@ get_service_version(){
 }
 
 compare (){
-    result=$(is_base $1 $2)
-    version1=$(get_service_version $3)
-    version2=$(get_service_version $4)
-    if [ $result == "true" ] || [ "$version1" != "$version2" ];     #compare alpine and service versions
+    result_arm=$(is_base $1 $2)
+    result_arm64=$(is_base $3 $4)
+    result_amd64=$(is_base $5 $6)
+    version1=$(get_service_version $5)
+    version2=$(get_service_version $6)
+    [ $result_arm == "true" ] || [ $result_amd64 == "true" ] || [ $result_arm64 == "true" ]|| [ "$version1" != "$version2" ];     #compare alpine and service versions
     then
         echo "true"
     else
@@ -53,15 +73,16 @@ create_manifest (){
     local tag_latest=$2     #latest
     local tag_time=$3       #timetag
     local tag_arm=$4        #treehouses/webssh-tags:arm
-    local tag_x86=$5
-    local tag_arm64=$6
-    docker manifest create   $repo:$tag_latest $tag_arm $tag_x86 $tag_arm64
-    docker manifest create   $repo:$tag_time   $tag_arm $tag_x86 $tag_arm64
+    local tag_arm64=$5
+    local tag_x86=$6
+
+    docker manifest create   $repo:$tag_latest      $tag_arm $tag_arm64 $tag_x86
+    docker manifest create   $repo:$tag_time        $tag_arm $tag_arm64 $tag_x86
 
     docker manifest annotate $repo:$tag_latest $tag_arm   --arch arm
     docker manifest annotate $repo:$tag_time   $tag_arm   --arch arm
-    docker manifest annotate $repo:$tag_latest $tag_x86   --arch amd64
-    docker manifest annotate $repo:$tag_time   $tag_x86   --arch amd64
     docker manifest annotate $repo:$tag_latest $tag_arm64 --arch arm64
     docker manifest annotate $repo:$tag_time   $tag_arm64 --arch arm64
+    docker manifest annotate $repo:$tag_latest $tag_x86   --arch amd64
+    docker manifest annotate $repo:$tag_time   $tag_x86   --arch amd64
 }
