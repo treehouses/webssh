@@ -10,20 +10,35 @@ services:
 script:
   - export DOCKER_CLI_EXPERIMENTAL=enabled
   - source sha_function.sh
-  - flag_alpine=$(is_base "treehouses/alpine:latest" "treehouses/webssh:latest")
-  - echo $flag_alpine
+  - alpine_arm_sha=$(get_manifest_sha "treehouses/alpine:latest" "arm")
+  - echo $alpine_arm_sha
+  - alpine_amd64_sha=$(get_manifest_sha "treehouses/alpine:latest" "amd64")
+  - echo $alpine_amd64_sha
+  - alpine_arm64_sha=$(get_manifest_sha "treehouses/alpine:latest" "arm64")
+  - echo $alpine_arm64_sha
+  - webssh_arm_sha=$(get_manifest_sha "treehouses/webssh:latest" "arm")
+  - echo $webssh_arm_sha
+  - webssh_amd64_sha=$(get_manifest_sha "treehouses/webssh" "amd64")
+  - echo $webssh_amd64_sha
+  - webssh_arm64_sha=$(get_manifest_sha "treehouses/webssh" "arm64")
+  - echo $webssh_arm64_sha
+  - flag_arm=$(is_base "treehouses/alpine@"$alpine_arm_sha "treehouses/webssh@"$webssh_arm_sha )
+  - echo $flag_arm
+  - flag_amd64=$(is_base "treehouses/alpine@"$alpine_amd64_sha "treehouses/webssh@"$webssh_amd64_sha )
+  - echo $flag_amd64
+  - flag_arm64=$(is_base "treehouses/alpine@"$alpine_arm64_sha "treehouses/webssh@"$webssh_arm64_sha )
+  - echo $flag_arm64
   - echo $DOCKERAPIKEY | docker login -u "sevenseas" --password-stdin
   - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-  - "./docker-build.sh treehouses/alpine:latest arm"
-  - "./docker-build.sh treehouses/alpine:latest amd64"
-  - "./docker-build.sh treehouses/alpine:latest arm64"
-  - flag=$(compare "treehouses/alpine:latest" "treehouses/webssh:latest" "treehouses/webssh:latest" "treehouses/webssh-tags:amd64")
+  - "./docker-build.sh treehouses/alpine:latest arm arm64 amd64"
+  - flag=$(compare "treehouses/alpine@"$alpine_arm_sha "treehouses/webssh@"$webssh_arm_sha "treehouses/alpine@"$alpine_amd64_sha "treehouses/webssh@"$webssh_amd64_sha  "treehouses/alpine@"$alpine_arm64_sha "treehouses/webssh@"$webssh_arm64_sha "treehouses/webssh:latest" "treehouses/webssh-tags:amd64")
   - echo $flag
 before_deploy:
+  - "./deploy.sh arm arm64 amd64"
   - tag_time=$(date +%Y%m%d%H%M)
   - echo $tag_time
   - tag_latest="latest"
-  - create_manifest treehouses/webssh $tag_latest $tag_time treehouses/webssh-tags:arm treehouses/webssh-tags:amd64 treehouses/webssh-tags:arm64
+  - create_manifest treehouses/webssh $tag_latest $tag_time treehouses/webssh-tags:arm treehouses/webssh-tags:arm64 treehouses/webssh-tags:amd64
   - docker manifest inspect treehouses/webssh:$tag_latest
   - docker manifest inspect treehouses/webssh:$tag_time
 deploy:
