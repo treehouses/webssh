@@ -78,8 +78,8 @@ create_manifest (){
     local tag_latest=$2     #latest
     local tag_time=$3       #timetag
     local tag_arm=$4        #treehouses/webssh-tags:arm
-    local tag_x86=$5
-    local tag_arm64=$6
+    local tag_arm64=$5
+    local tag_x86=$6
     docker manifest create   $repo:$tag_latest $tag_arm $tag_x86 $tag_arm64
     docker manifest create   $repo:$tag_time   $tag_arm $tag_x86 $tag_arm64
 
