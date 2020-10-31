@@ -30,13 +30,17 @@ script:
   - echo $flag_arm64
   - echo $DOCKERAPIKEY | docker login -u "sevenseas" --password-stdin
   - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-  - "./docker-build.sh treehouses/alpine:latest arm arm64 amd64"
+  - build_image "treehouses/nginx:latest" arm "treehoues/webssh" #base image is arm arch
+  - build_image "treehouses/nginx:latest" amd64 "treehoues/webssh" #base image is amd64 arch
+  - build_image "treehouses/nginx:latest" arm64 "treehoues/webssh" #base image is arm64 arch
+  #- "./docker-build.sh treehouses/alpine:latest arm arm64 amd64"
   - flag=$(compare "treehouses/alpine@"$alpine_arm_sha "treehouses/webssh@"$webssh_arm_sha "treehouses/alpine@"$alpine_amd64_sha "treehouses/webssh@"$webssh_amd64_sha  "treehouses/alpine@"$alpine_arm64_sha "treehouses/webssh@"$webssh_arm64_sha "treehouses/webssh:latest" "treehouses/webssh-tags:amd64")
   - echo $flag
+  - flag="false"
 before_deploy:
-  - "./deploy.sh arm"
-  - "./deploy.sh arm64"
-  - "./deploy.sh amd64"
+  - deploy_image "treehouses/webssh" arm
+  - deploy_image "treehouses/webssh" amd64
+  - deploy_image "treehouses/webssh" arm64
   - tag_time=$(date +%Y%m%d%H%M)
   - echo $tag_time
   - tag_latest="latest"
