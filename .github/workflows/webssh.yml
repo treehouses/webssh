@@ -1,0 +1,68 @@
+name: webssh-docker-image-build
+
+on:
+  push:
+  schedule:
+    - cron: '0 */8 * * *'
+
+jobs: 
+  webssh-docker-image-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: docker login
+        run: docker login -u ${{ secrets.DOCKERUSERNAME }} -p ${{ secrets.DOCKERAPIKEY }}
+      - name: treehouses webssh
+        run: |
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          repo="rjpadilla/webssh"
+          source .github/workflows/utils.sh
+          alpine_arm_sha=$(get_manifest_sha "treehouses/alpine:latest" "arm")
+          echo "alpine arm"
+          echo $alpine_arm_sha
+          webssh_arm_sha=$(get_manifest_sha "webssh:latest" "arm")
+          echo "webssh arm"
+          echo $webssh_arm_sha
+          flag_arm=$(is_base "treehouses/alpine@"$alpine_arm_sha "webssh@"$webssh_arm_sha)
+          echo "flag arm"
+          echo $flag_arm
+          alpine_amd64_sha=$(get_manifest_sha "treehouses/alpine:latest" "amd64")
+          echo $alpine_amd64_sha
+          webssh_amd64_sha=$(get_manifest_sha "webssh:latest" "amd64")
+          echo $webssh_amd64_sha
+          flag_amd64=$(is_base "treehouses/alpine@"$alpine_amd64_sha "webssh@"$webssh_amd64_sha)
+          echo "flag amd64"
+          echo $flag_amd64
+          alpine_arm64_sha=$(get_manifest_sha "treehouses/alpine:latest" "arm64")
+          echo "alpine arm64"
+          echo $alpine_arm64_sha
+          webssh_arm64_sha=$(get_manifest_sha "webssh:latest" "arm64")
+          echo "webssh arm64"
+          echo $webssh_arm64_sha
+          flag_arm64=$(is_base "treehouses/alpine@"$alpine_arm64_sha "webssh@"$webssh_arm64_sha)
+          echo "flag arm64"
+          echo $flag_arm64
+          version2=$(image_version webssh:latest)
+          echo "repo version is $version2"
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          build_image "treehouses/alpine:latest" arm "$repo"
+          build_image "treehouses/alpine:latest" amd64 "$repo"
+          build_image "treehouses/alpine:latest" arm64 "$repo"
+          flag=$(compare "treehouses/alpine@"$alpine_arm_sha "webssh@"$webssh_arm_sha "treehouses/alpine@"$alpine_amd64_sha "webssh@"$webssh_amd64_sha "treehouses/alpine@"$alpine_arm64_sha "webssh@"$webssh_arm64_sha "webssh" "webssh-tags:amd64")
+          echo $flag
+          deploy_image "$repo" arm
+          deploy_image "$repo" amd64
+          deploy_image "$repo" arm64
+          tag=$(date +%Y%m%d%H%M)
+          tag2="latest"
+          echo $tag
+          create_manifest $repo $tag $tag2 $repo-tags:amd64 $repo-tags:arm $repo-tags:arm64
+          docker manifest inspect $repo:$tag
+          docker manifest inspect $repo:$tag2
+          if [[ $flag == true ]]; then
+            docker manifest push $repo:$tag; docker manifest push $repo:$tag2
+          else
+            echo "no changes"
+          fi
