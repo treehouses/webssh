@@ -20,7 +20,7 @@ jobs:
       - name: treehouses webssh
         run: |
           export DOCKER_CLI_EXPERIMENTAL=enabled
-          repo="dyeh123/webssh"
+          repo="treehouses/webssh"
           source .github/workflows/utils.sh
           echo "amd64"
           alpine_x86_sha=$(get_variant_sha "alpine" "latest" "amd64")
