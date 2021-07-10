@@ -1,0 +1,75 @@
+name: build on change
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+  repository_dispatch:
+    types: webssh
+
+jobs:
+  webssh:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+      - name: docker login
+        run: docker login -u ${{ secrets.DOCKERUSERNAME }} -p ${{ secrets.DOCKERAPIKEY }}
+      - name: treehouses webssh
+        run: |
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          repo="treehouses/webssh"
+          base="treehouses/alpine"
+          source .github/workflows/utils.sh
+          echo "amd64"
+          baseamd64=$(get_variant_sha "$base" "latest" "amd64")
+          echo $baseamd64
+          repoamd64=$(get_manifest_sha "$repo:latest" "amd64")
+          echo $repoamd64
+          echo "arm"
+          basearm=$(get_tag_sha "$base" "latest")
+          echo $basearm
+          repoarm=$(get_manifest_sha "$repo:latest" "arm")
+          echo $repoarm
+          echo "arm64"
+          basearm64=$(get_variant_sha "$base" "latest" "arm64")
+          echo $basearm64
+          repoarm64=$(get_manifest_sha "$repo:latest" "arm64")
+          echo $repoarm64
+          echo "change"
+          flag=$(compare_sha "$baseamd64" "$repoamd64" "$basearm" "$repoarm" "$basearm64" "$repoarm64")
+          echo $flag
+          if [[ $flag == true ]]; then
+            docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+            build_image "$base:latest" amd64 $repo
+            build_image "$base:latest" arm $repo
+            build_image "$base:latest" arm64 $repo
+            deploy_image $repo arm
+            deploy_image $repo amd64
+            deploy_image $repo arm64
+            sudo npm install -g @treehouses/cli
+            export gitter_channel="${{ secrets.CHANNEL }}"
+            echo "tags"
+            tag="$(date +%Y%m%d%H%M)"
+            echo $tag
+            docker manifest create $repo:$tag $repo-tags:amd64 $repo-tags:arm $repo-tags:arm64
+            docker manifest annotate $repo:$tag $repo-tags:amd64 --arch amd64
+            docker manifest annotate $repo:$tag $repo-tags:arm64 --arch arm64
+            docker manifest annotate $repo:$tag $repo-tags:arm --arch arm
+            docker manifest inspect $repo:$tag
+            docker manifest push $repo:$tag
+            tag2="latest"
+            echo $tag2
+            docker manifest create $repo:$tag2 $repo-tags:amd64 $repo-tags:arm $repo-tags:arm64
+            docker manifest annotate $repo:$tag2 $repo-tags:amd64 --arch amd64
+            docker manifest annotate $repo:$tag2 $repo-tags:arm64 --arch arm64
+            docker manifest annotate $repo:$tag2 $repo-tags:arm --arch arm
+            docker manifest inspect $repo:$tag2
+            docker manifest push $repo:$tag2
+            echo "https://hub.docker.com/r/treehouses/webssh/tags"
+            treehouses feedback "new treehouses/webssh check https://hub.docker.com/r/treehouses/webssh/tags"
+          else
+            echo "no changes"
+          fi
