@@ -21,30 +21,31 @@ jobs:
         run: |
           export DOCKER_CLI_EXPERIMENTAL=enabled
           repo="treehouses/webssh"
+          base="treehouses/alpine"
           source .github/workflows/utils.sh
           echo "amd64"
-          alpine_x86_sha=$(get_variant_sha "alpine" "latest" "amd64")
-          echo $alpine_x86_sha
-          variant_webssh_x86_sha=$(get_manifest_sha "$repo:latest" "amd64")
-          echo $variant_webssh_x86_sha
+          baseamd64=$(get_variant_sha "$base" "latest" "amd64")
+          echo $baseamd64
+          repoamd64=$(get_manifest_sha "$repo:latest" "amd64")
+          echo $repoamd64
           echo "arm"
-          balena_rpi_sha=$(get_tag_sha "balenalib/raspberry-pi-alpine" "latest")
-          echo $balena_rpi_sha
-          variant_rpi_sha=$(get_manifest_sha "$repo:latest" "arm")
-          echo $variant_rpi_sha
+          basearm=$(get_tag_sha "$base" "latest")
+          echo $basearm
+          repoarm=$(get_manifest_sha "$repo:latest" "arm")
+          echo $repoarm
           echo "arm64"
-          alpine_arm64_sha=$(get_variant_sha "alpine" "latest" "arm64")
-          echo $alpine_arm64_sha
-          variant_webssh_arm64_sha=$(get_manifest_sha "$repo:latest" "arm64")
-          echo $variant_webssh_arm64_sha
+          basearm64=$(get_variant_sha "$base" "latest" "arm64")
+          echo $basearm64
+          repoarm64=$(get_manifest_sha "$repo:latest" "arm64")
+          echo $repoarm64
           echo "change"
-          flag=$(compare_sha  "$alpine_x86_sha" "$variant_webssh_x86_sha" "$balena_rpi_sha" "$variant_rpi_sha" "$alpine_arm64_sha" "$variant_webssh_arm64_sha")
+          flag=$(compare_sha "$baseamd64" "$repoamd64" "$basearm" "$repoarm" "$basearm64" "$repoarm64")
           echo $flag
           if [[ $flag == true ]]; then
             docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-            build_image "treehouses/alpine:latest" amd64 $repo
-            build_image "treehouses/alpine:latest" arm $repo
-            build_image "treehouses/alpine:latest" arm64 $repo
+            build_image "$base:latest" amd64 $repo
+            build_image "$base:latest" arm $repo
+            build_image "$base:latest" arm64 $repo
             deploy_image $repo arm
             deploy_image $repo amd64
             deploy_image $repo arm64
