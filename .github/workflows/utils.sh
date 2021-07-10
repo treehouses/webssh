@@ -47,7 +47,6 @@ get_manifest_sha (){
         fi
         i=$i+1
     done < "$2".txt
-
 }
 
 get_tag_sha(){
