@@ -26,20 +26,20 @@ jobs:
           echo "amd64"
           baseamd64=$(get_variant_sha "$base" "latest" "amd64")
           echo $baseamd64
-          repoamd64=$(get_manifest_sha "$repo:latest" "amd64")
-          echo $repoamd64
+          # repoamd64=$(get_manifest_sha "$repo:latest" "amd64")
+          # echo $repoamd64
           echo "arm"
           basearm=$(get_tag_sha "$base" "latest")
           echo $basearm
-          repoarm=$(get_manifest_sha "$repo:latest" "arm")
-          echo $repoarm
+          # repoarm=$(get_manifest_sha "$repo:latest" "arm")
+          # echo $repoarm
           echo "arm64"
           basearm64=$(get_variant_sha "$base" "latest" "arm64")
           echo $basearm64
-          repoarm64=$(get_manifest_sha "$repo:latest" "arm64")
-          echo $repoarm64
+          # repoarm64=$(get_manifest_sha "$repo:latest" "arm64")
+          # echo $repoarm64
           echo "change"
-          flag=$(compare_sha "$baseamd64" "$repoamd64" "$basearm" "$repoarm" "$basearm64" "$repoarm64")
+          flag=true #$(compare_sha "$baseamd64" "$repoamd64" "$basearm" "$repoarm" "$basearm64" "$repoarm64")
           echo $flag
           if [[ $flag == true ]]; then
             docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
