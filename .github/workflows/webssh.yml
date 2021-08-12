@@ -1,0 +1,45 @@
+name: build on change
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+  repository_dispatch:
+    types: webssh
+
+jobs:
+
+  compare:
+    runs-on: ubuntu-latest
+    outputs:
+      flag: ${{ steps.set-flag.outputs.flag }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm, arm64]
+    steps:
+      - name: checkoutrepository
+        uses: actions/checkout@v2
+      - name: container registries
+        run: |
+          docker login docker.io -u ${{ secrets.DOCKERUSERNAME }} -p ${{ secrets.DOCKERAPIKEY }}
+      - name: compare image
+        id: set-flag
+        run: |
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          version="latest"
+          repo="neethumohan1212/webssh-tags:${{ matrix.arch }}"
+          case ${{ matrix.arch }} in
+            amd64) : "neethumohan1212/alpine:$version" ;;
+            arm) : "neethumohan1212/alpine:$version" ;;
+            arm64) : "neethumohan1212/alpine:$version" ;;
+          esac
+          base="$_"
+          # docker pull -q $base &>/dev/null
+          # docker pull -q $repo &>/dev/null
+          # basesha=$(docker image inspect $base | jq --raw-output '.[0].RootFS.Layers|.[]')
+          # reposha=$(docker image inspect $repo | jq --raw-output '.[0].RootFS.Layers|.[]')
+          # echo "base sha:$basesha repo sha:$reposha"
+          # [[ $reposha == *$basesha* ]] && echo "no changes" || echo "::set-output name=flag::true"
